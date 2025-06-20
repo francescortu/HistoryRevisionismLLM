@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "HistoryRevisionismLLM"
+version = "0.1.0"
+description = ""
+authors = ["Fracesc0rtu <francescortu@live.it>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.13"
+python-dotenv = "^1.0.1"
+easyroutine = {path = "easyroutine", develop = true}
+pandas = "^2.3.0"
+tqdm = "^4.67.1"
+bs4 = "^0.0.2"
+icu = "^0.0.1"
+scikit-learn = "^1.7.0"
+loguru = "^0.7.3"
+waybackpy = "^3.0.6"
+datasets = "^3.6.0"
+transformers = "4.51.1"
+vllm = "^0.9.1"
+ipykernel = "^6.29.5"
+
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

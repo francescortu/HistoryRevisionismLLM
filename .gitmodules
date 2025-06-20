@@ -1,0 +1,4 @@
+[submodule "easyroutine"]
+	path = easyroutine
+	url = https://github.com/francescortu/easyroutine
+	branch = vllm

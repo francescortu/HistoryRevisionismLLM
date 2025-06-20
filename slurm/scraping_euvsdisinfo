@@ -1,0 +1,14 @@
+#!/bin/bash
+#!/bin/bash
+#SBATCH --job-name=experiment
+#SBATCH -N1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=15
+#SBATCH -p EPYC
+#SBATCH --mem=50gb
+#SBATCH --time=20:00:00
+#SBATCH --output=slurm_log/euvsdisinfo.log
+#SBATCH --error=slurm_log/euvsdisinfo.log
+
+cd src/euvsdisinfo_scraping/
+poetry run python scripts/collect/collect.py --api_token=3388fb30431045b747503222af6a006b --num_processes=10
