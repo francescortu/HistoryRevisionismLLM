@@ -21,6 +21,9 @@ datasets = "^3.6.0"
 transformers = "4.51.1"
 vllm = "^0.9.1"
 ipykernel = "^6.29.5"
+beautifulsoup4 = "^4.13.4"
+requests = "^2.32.4"
+lxml = "^5.4.0"
 
 
 
