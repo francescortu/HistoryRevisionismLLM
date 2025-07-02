@@ -21,4 +21,6 @@ poetry install
     - `manual_historical`: Contains the data files for the manual historical source
         - `input`: Contains the raw data files for the manual historical source
         - `processed`: Contains the generated prompts for the manual historical source
+- `prompts`: Contains the prompt templates used for working with the LLMs in the different stages of the project.
+    - `user_cases.py`: Contains the instruction to generate evaluation prompts from raw data.
 
