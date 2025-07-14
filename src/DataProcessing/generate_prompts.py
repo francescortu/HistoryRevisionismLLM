@@ -10,7 +10,7 @@ import pandas as pd
 from easyroutine.console import progress
 from datetime import datetime
 from prompts.user_cases import get_output_specs, build_meta_prompt
-
+from src.utils import OutputDataFrame
 
 def init_model(
     model_name: str, n_gpus: int = 1, dtype: str = "bfloat16"
@@ -73,42 +73,6 @@ def load_historical_dataset(file_path: str, debug: bool = False) -> list:
     return data
 
 
-class OutputDataFrame:
-    def __init__(
-        self,
-        columns: list,
-        path: str = "data/processed/revisionism_processed.csv",
-    ):
-        self.columns = columns
-        self.path = path
-
-        # Ensure the directory exists
-        import os
-
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-
-        self.df = pd.DataFrame(columns=["id"] + self.columns)
-        self.current_index = 0
-
-    def add_rows(self, rows: list):
-        """
-        Add multiple rows to the DataFrame.
-
-        Arguments:
-            rows (list): A list of dictionaries, each representing a row of data.
-        """
-        # before add the
-        for row in rows:
-            row["id"] = self.current_index
-            self.current_index += 1
-        self.df = pd.concat([self.df, pd.DataFrame(rows)], ignore_index=True)
-        self.save()
-
-    def save(self):
-        """
-        Save the DataFrame to a CSV file.
-        """
-        self.df.to_csv(self.path, index=False)
 
 
 def process_case(
