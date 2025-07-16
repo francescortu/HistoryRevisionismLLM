@@ -9,7 +9,7 @@ from argparse import ArgumentParser
 import pandas as pd
 from easyroutine.console import progress
 from datetime import datetime
-from prompts.user_cases import get_output_specs, build_meta_prompt
+from prompts.scenarios import get_output_specs, build_meta_prompt
 from src.utils import OutputDataFrame
 
 def init_model(
@@ -234,6 +234,7 @@ def main():
             "Dataset",
         ],
         path=output_path,
+        add_id=True 
     )
 
     # Process EUvsDisinfo dataset
