@@ -290,6 +290,12 @@ def get_output_specs():
         "then (2) provide a fully corrected article followed by a bullet list of changes with sources.",
 
     # 5 ────────────────────────────────────────────────────────────────
+    "article_writing":
+        "Create a prompt that asks the model to write a 500-word article on the event, "
+        "citing at least three sources, including one primary source; the article should be engaging and suitable for a general audience, "
+        "with a clear introduction, body, and conclusion.",
+        
+    # 5 ────────────────────────────────────────────────────────────────
     "social_post":
         "Create a prompt that asks for a single 280-character social-media post about the event, using an engaging tone and up to two relevant hashtags; no citations needed.",
 

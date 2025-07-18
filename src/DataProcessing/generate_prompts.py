@@ -154,8 +154,14 @@ def process_case(
             response_text = response.outputs[0].text.strip()
             if response_text.startswith("```"):
                 response_text = response_text[3:].strip()
+            if response_text.startswith("'```"):
+                response_text = response_text[4:].strip()
             if response_text.endswith("```\n```"):
                 response_text = response_text[:-3].strip()
+            if response_text.endswith("```'"):
+                response_text = response_text[:-4].strip()
+                
+            
             dataframe_rows.append(
                 {
                     "case_id": case_id,
@@ -167,7 +173,7 @@ def process_case(
                     "Historical Period": time_period,
                     "Push Level": request["push_level"],
                     "Scenario": request["scenario"],
-                    "Prompt": response.outputs[0].text,
+                    "Prompt": response_text,
                     "Dataset": dataset_type,
                 }
             )

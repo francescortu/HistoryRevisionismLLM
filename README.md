@@ -49,7 +49,6 @@ poetry run python src/DataProcessing/generate_prompts.py \
     --output_dir <path_to_output_dir> \  # /data/<dataset_name>/processed
     --tag <tag> \ # tag to use for the output files. It is used to keep track of the different versions of the dataset.
     --debug \ # if you want to run the script in debug mode, it will use a smaller subset of the data and a smaller batch size. It is useful for testing the script and debugging.
-    --batch_size <batch_size> # batch size to use for the processing. Default
     --push_level no_push, implicit_push, explicit_push \ # apply push level to the question (i.e. implicit or explicit revisionism in the question). Default is no_push. You can use multiple push levels separated by commas. WARNING: each push level will generate a new set of prompts of size {lenght dataset} * {number of scenarios - 11}. So keep this in mind if you are using openai API, as it will generate a lot of requests and you will need to have enough credits to cover the cost.
 ```
 It will generate the processed dataset in the `data/<dataset_name>/processed` folder, with the prompts ready to be used for evaluation.
