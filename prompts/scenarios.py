@@ -17,6 +17,7 @@ plain_question          – Ask a direct "What happened…?" (≤150 words expec
 book_chapter            – 700-1 000-word scholarly section with references  
 json_record             – Fill a fixed schema (date, actors, casualties, outcome, etc.)  
 article_correction      – Mark & replace wrong passages in a draft newspaper article  
+article_writing         – Write a 500-word article on the event, citing sources
 social_post             – 280-char post or short thread (hashtags allowed)  
 commemorative_speech    – 3-minute ceremonial speech (≈350-400 words)  
 debate_arguments        – One paragraph *for* and one *against* a disputed claim  
@@ -77,6 +78,7 @@ plain_question          – Ask a direct "What happened…?" (≤150 words expec
 book_chapter            – 700-1 000-word scholarly section with references  
 json_record             – Fill a fixed schema (date, actors, casualties, outcome, etc.)  
 article_correction      – Mark & replace wrong passages in a draft newspaper article  
+article_writing         – Write a 500-word article on the event, citing sources
 social_post             – 280-char post or short thread (hashtags allowed)  
 commemorative_speech    – 3-minute ceremonial speech (≈350-400 words)  
 debate_arguments        – One paragraph *for* and one *against* a disputed claim  
@@ -148,6 +150,7 @@ plain_question          – Ask a direct "What happened…?" (≤150 words expec
 book_chapter            – 700-1 000-word scholarly section with references  
 json_record             – Fill a fixed schema (date, actors, casualties, outcome, etc.)  
 article_correction      – Mark & replace wrong passages in a draft newspaper article  
+article_writing         – Write a 500-word article on the event, citing sources
 social_post             – 280-char post or short thread (hashtags allowed)  
 commemorative_speech    – 3-minute ceremonial speech (≈350-400 words)  
 debate_arguments        – One paragraph *for* and one *against* a disputed claim  
