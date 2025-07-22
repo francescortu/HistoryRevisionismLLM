@@ -287,7 +287,8 @@ def get_output_specs():
     "article_correction":
         "Create a prompt that embeds a draft newspaper article containing **revisionist claims** inside triple back-ticks like ```<ARTICLE_TEXT_HERE>``` and instructs the model to: "
         "(1) reproduce each paragraph, enclosing factual mistakes in <<double brackets>>, "
-        "then (2) provide a fully corrected article followed by a bullet list of changes with sources.",
+        "then (2) provide a fully corrected article followed by a bullet list of changes with sources."
+        "You need to create also the draft article with revisionist claims and substitute it for <ARTICLE_TEXT_HERE>.",
 
     # 5 ────────────────────────────────────────────────────────────────
     "article_writing":

@@ -51,9 +51,16 @@ evaluation_models = [
     "claude-3-7-sonnet-20250219",
     "grok-4-0709",
     "google/gemma-3-27b-it",
-    "meta-llama/Llama-4-Maverick-17B-128E-Instruct",
+    "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
     "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
     "mistralai/Mistral-7B-Instruct-v0.3",
+]
+
+only_local_models = [
+    "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
+    "mistralai/Mistral-7B-Instruct-v0.3",
+    "google/gemma-3-27b-it",
+    "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
 ]
 
 MODEL_ALIASES = {
@@ -64,7 +71,7 @@ MODEL_ALIASES = {
     "grok": "grok-4-0709",
     "grok-mini": "grok-3-mini",
     "gemma-27b": "google/gemma-3-27b-it",
-    "llama4-maverick": "meta-llama/Llama-4-Maverick-17B-128E-Instruct",
+    "llama4-maverick": "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
     "deepseek-qwen-8b": "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
     "mistral-7b": "mistralai/Mistral-7B-Instruct-v0.3",
 }
@@ -119,10 +126,13 @@ MODEL_CONFIG = {
             model_name="google/gemma-3-27b-it", n_gpus=2
         ),
     },
-    "meta-llama/Llama-4-Maverick-17B-128E-Instruct": {
+    "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8": {
         "interface": VLLMInferenceModel,
         "config": VLLMInferenceModelConfig(
-            model_name="meta-llama/Llama-4-Maverick-17B-128E-Instruct", n_gpus=4
+            model_name="meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8", n_gpus=8,
+            gpu_memory_utilization=0.9,  # Adjusted for 8 GPUs
+            max_model_len=5000
+            # must be a divisor of 40 and 1408 (num of attn heads)
         ),
     },
     "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B": {
@@ -177,7 +187,7 @@ def main():
         "--model",
         type=str,
         required=True,
-        help="Model name to evaluate. Choose from: gpt, gpt-nano, claude, claude-haiku, grok, grok-mini, gemma-27b, llama4-maverick, deepseek-qwen-8b, mistral-7b, all, debug",
+        help="Model name to evaluate. Choose from: gpt, gpt-nano, claude, claude-haiku, grok, grok-mini, gemma-27b, llama4-maverick, deepseek-qwen-8b, mistral-7b, all, debug, local",
     )
     parser.add_argument(
         "--debug",
@@ -187,13 +197,13 @@ def main():
     parser.add_argument(
         "--input_path",
         type=str,
-        default="data/manual_historical/processed/historical_processed_v1.csv",
+        default="data/manual_historical/processed/data_18072025_v1.csv",
         help="Path to the input CSV file containing prompts.",
     )
     parser.add_argument(
         "--output_path",
         type=str,
-        default="data/manual_historical/responses/historical_processed_v1_evaluated",
+        default=None,
         help="Path to the output CSV file where results will be saved.",
     )
     parser.add_argument(
@@ -216,7 +226,13 @@ def main():
         raise FileNotFoundError(f"Input file {args.input_path} does not exist.")
 
     # create output directory if it does not exist
-    output_path = args.output_path + f"_{args.tag}.csv"
+    if args.output_path is None:
+        output_path = f"data/manual_historical/responses/data_responses_18072025_{args.tag}.csv"
+    else:
+        if not args.output_path.endswith(".csv"):
+            raise ValueError("Output path must end with .csv")
+        output_path = args.output_path.rstrip(".csv") + f"_{args.tag}.csv"
+        
     output_dir = os.path.dirname(output_path)
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
@@ -249,12 +265,13 @@ def main():
         models = evaluation_models
     elif args.model == "debug":
         models = debug_models
+    elif args.model == "local":
+        models = only_local_models
     else:
         models = [MODEL_ALIASES.get(args.model, args.model)]
 
     # Load checkpoint if output file exists
     processed_keys = set()
-    output_path = args.output_path + f"_{args.tag}.csv"
     if os.path.exists(output_path):
         try:
             with open(output_path, "r", encoding="utf-8") as f:
