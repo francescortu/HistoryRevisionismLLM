@@ -57,10 +57,11 @@ evaluation_models = [
 ]
 
 only_local_models = [
-    "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
+    # "google/gemma-3-27b-it",
     "mistralai/Mistral-7B-Instruct-v0.3",
-    "google/gemma-3-27b-it",
-    "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
+    "Qwen/Qwen3-32B",
+    "meta-llama/Llama-4-Scout-17B-16E-Instruct",
+    "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B",
 ]
 
 MODEL_ALIASES = {
@@ -72,7 +73,10 @@ MODEL_ALIASES = {
     "grok-mini": "grok-3-mini",
     "gemma-27b": "google/gemma-3-27b-it",
     "llama4-maverick": "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
+    "llama-scout": "meta-llama/Llama-4-Scout-17B-16E-Instruct",
+    "qwen-32b": "Qwen/Qwen3-32B",
     "deepseek-qwen-8b": "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
+    "deepseel-qewen-32b": "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B",
     "mistral-7b": "mistralai/Mistral-7B-Instruct-v0.3",
 }
 
@@ -129,9 +133,10 @@ MODEL_CONFIG = {
     "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8": {
         "interface": VLLMInferenceModel,
         "config": VLLMInferenceModelConfig(
-            model_name="meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8", n_gpus=8,
+            model_name="meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
+            n_gpus=8,
             gpu_memory_utilization=0.9,  # Adjusted for 8 GPUs
-            max_model_len=5000
+            max_model_len=5000,
             # must be a divisor of 40 and 1408 (num of attn heads)
         ),
     },
@@ -146,6 +151,22 @@ MODEL_CONFIG = {
         "config": VLLMInferenceModelConfig(
             model_name="mistralai/Mistral-7B-Instruct-v0.3", n_gpus=2
         ),
+    },
+    "meta-llama/Llama-4-Scout-17B-16E-Instruct": {
+        "interface": VLLMInferenceModel,
+        "config": VLLMInferenceModelConfig(
+            model_name="meta-llama/Llama-4-Scout-17B-16E-Instruct", n_gpus=4
+        ),
+    },
+    "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B": {
+        "interface": VLLMInferenceModel,
+        "config": VLLMInferenceModelConfig(
+            model_name="deepseek-ai/DeepSeek-R1-Distill-Qwen-32B", n_gpus=2
+        ),
+    },
+    "Qwen/Qwen3-32B": {
+        "interface": VLLMInferenceModel,
+        "config": VLLMInferenceModelConfig(model_name="Qwen/Qwen3-32B", n_gpus=2),
     },
 }
 
@@ -215,6 +236,11 @@ def main():
         default=datetime.now().strftime("%Y%m%d_%H%M%S"),
         help="Tag for the output files.",
     )
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Overwrite existing output file instead of treating it as checkpoint.",
+    )
     # assert input_path exists
     args = parser.parse_args()
     if args.debug:
@@ -227,12 +253,14 @@ def main():
 
     # create output directory if it does not exist
     if args.output_path is None:
-        output_path = f"data/manual_historical/responses/data_responses_18072025_{args.tag}.csv"
+        output_path = (
+            f"data/manual_historical/responses/data_responses_18072025_{args.tag}.csv"
+        )
     else:
         if not args.output_path.endswith(".csv"):
             raise ValueError("Output path must end with .csv")
         output_path = args.output_path.rstrip(".csv") + f"_{args.tag}.csv"
-        
+
     output_dir = os.path.dirname(output_path)
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
@@ -240,25 +268,54 @@ def main():
     # load input file
     prompts = load_prompts(args.input_path, debug=args.debug)
 
-    output_df = OutputDataFrame(
-        columns=[
-            "id",
-            "case_id",
-            "Model",
-            "Prompt",
-            "Response",
-            "Historical Event",
-            "True Version",
-            "False Version",
-            "Country/Region",
-            "Source",
-            "Historical Period",
-            "Push Level",
-            "Scenario",
-            "Dataset",
-        ],
-        path=output_path,
-    )
+    # Initialize OutputDataFrame with existing data if not overwriting
+    if not args.overwrite and os.path.exists(output_path):
+        print(f"Loading existing output file: {output_path}")
+        existing_df = pd.read_csv(output_path)
+        output_df = OutputDataFrame(
+            columns=[
+                "id",
+                "case_id",
+                "Model",
+                "Prompt",
+                "Response",
+                "Historical Event",
+                "True Version",
+                "False Version",
+                "Country/Region",
+                "Source",
+                "Historical Period",
+                "Push Level",
+                "Scenario",
+                "Dataset",
+            ],
+            path=output_path,
+        )
+        # Load existing data into the OutputDataFrame
+        output_df.df = existing_df
+        print(f"Loaded {len(existing_df)} existing entries from checkpoint")
+    else:
+        if args.overwrite and os.path.exists(output_path):
+            print(f"Overwriting existing output file: {output_path}")
+        output_df = OutputDataFrame(
+            columns=[
+                "id",
+                "case_id",
+                "Model",
+                "Prompt",
+                "Response",
+                "Historical Event",
+                "True Version",
+                "False Version",
+                "Country/Region",
+                "Source",
+                "Historical Period",
+                "Push Level",
+                "Scenario",
+                "Dataset",
+            ],
+            path=output_path,
+        )
 
     # create model list
     if args.model == "all":
@@ -270,26 +327,33 @@ def main():
     else:
         models = [MODEL_ALIASES.get(args.model, args.model)]
 
-    # Load checkpoint if output file exists
-    processed_keys = set()
-    if os.path.exists(output_path):
-        try:
-            with open(output_path, "r", encoding="utf-8") as f:
-                reader = csv.DictReader(f)
-                for row in reader:
-                    processed_keys.add(
-                        (
-                            str(row.get("id")),
-                            str(row.get("Model", row.get("model", ""))),
-                        )
-                    )
-        except Exception as e:
-            print(f"Warning: Could not load checkpoint file: {e}")
-
     print(f"Evaluating with models: {models}")
     for model_name in models:
+        # Load checkpoint for each model specifically (only if not overwriting)
+        processed_keys = set()
+        if not args.overwrite and os.path.exists(output_path):
+            try:
+                with open(output_path, "r", encoding="utf-8") as f:
+                    reader = csv.DictReader(f)
+                    for row in reader:
+                        # Only add to processed_keys if it matches the current model
+                        if str(row.get("Model", row.get("model", ""))) == model_name:
+                            processed_keys.add(
+                                (
+                                    str(row.get("id")),
+                                    str(row.get("Model", row.get("model", ""))),
+                                )
+                            )
+                print(
+                    f"Found {len(processed_keys)} already processed entries for model {model_name}"
+                )
+            except Exception as e:
+                print(f"Warning: Could not load checkpoint file: {e}")
+        elif args.overwrite:
+            print(f"Overwrite mode: not loading checkpoint for {model_name}")
+
         assert model_name is not None, f"Model {model_name} is not supported."
-        print(f"Initializing model: {model_name}")
+        print(f"Evaluating model: {model_name}")
         model = init_model(model_name)
         for i in progress(
             range(0, len(prompts), args.batch_size),
