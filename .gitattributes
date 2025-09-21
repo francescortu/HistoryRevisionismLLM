@@ -12,3 +12,7 @@ data/manual_historical/responses/data_responses_18072025_v1.6.csv filter=lfs dif
 data/manual_historical/responses/data_responses_18072025_v1.csv filter=lfs diff=lfs merge=lfs -text
 data/manual_historical/responses/data_responses_18072025_explicit_push_api_all_v1.6.csv filter=lfs diff=lfs merge=lfs -text
 data/manual_historical/responses/data_responses_18072025_explicit_push_v1.6.csv filter=lfs diff=lfs merge=lfs -text
+data/manual_historical_evaluated/all_models_with_score_* filter=lfs diff=lfs merge=lfs -text
+data/manual_historical/evaluated/all_models_with_score_1082025_explicit_push_v1.6.csv filter=lfs diff=lfs merge=lfs -text
+data/manual_historical/evaluated/all_models_with_score_1082025_implicit_push_v1.6.csv filter=lfs diff=lfs merge=lfs -text
+data/manual_historical/evaluated/all_models_with_score_1082025_v3.txt filter=lfs diff=lfs merge=lfs -text
