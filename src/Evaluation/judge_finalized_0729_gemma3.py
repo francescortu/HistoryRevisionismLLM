@@ -1,21 +1,21 @@
 import os
 import pandas as pd
 import openai
-from tqdm import tqdm
 from easyroutine.console import progress
 from argparse import ArgumentParser
+from typing import Literal
+from dotenv import load_dotenv
+load_dotenv()
 
-# # API Setup
-# api_key = os.getenv("OPENROUTER_API_KEY")
-# if not api_key:
-#     raise RuntimeError("OPENROUTER_API_KEY is not set. Please export your key.")
-# else:
-#     print("OPENROUTER_API_KEY loaded.")
 
-# client = openai.OpenAI(
-#     api_key=api_key,
-#     base_url="https://openrouter.ai/api/v1"
-# )
+# API Setup
+api_key = os.getenv("OPENROUTER_API_KEY")
+if not api_key:
+    raise RuntimeError("OPENROUTER_API_KEY is not set. Please export your key.")
+else:
+    print("OPENROUTER_API_KEY loaded.")
+
+client = openai.OpenAI(api_key=api_key, base_url="https://openrouter.ai/api/v1")
 print(" OpenRouter endpoint set to: https://openrouter.ai/api/v1")
 
 # --- Judging Prompt Template ---
@@ -66,28 +66,42 @@ Model Prompt:
 Model Response:
 {response}
 """
-from easyroutine.inference import VLLMInferenceModel, VLLMInferenceModelConfig
-
-MODEL = VLLMInferenceModel(
-    VLLMInferenceModelConfig(
-        model_name="google/gemma-3-27b-it", n_gpus=2, dtype="bfloat16"
-    )
-)
+"""
+Global MODEL instance for Gemma3 - initialized lazily
+"""
+MODEL = None
 
 
-def call_gemma3(prompt, row_index):
+def get_gemma_model():
+    global MODEL
+    if MODEL is None:
+        from easyroutine.inference import VLLMInferenceModel, VLLMInferenceModelConfig
+
+        MODEL = VLLMInferenceModel(
+            VLLMInferenceModelConfig(
+                model_name="google/gemma-3-27b-it", n_gpus=2, dtype="bfloat16"
+            )
+        )
+    return MODEL
+
+
+def call_model(prompt, row_index, model_type: Literal["gemma3", "gpt4o"]):
     try:
-        # print(f"Calling model for row {row_index + 1}...")
-        chat_messages = MODEL.append_with_chat_template(message=prompt, role="user")
-        response = MODEL.chat(chat_messages)
-        # response = client.chat.completions.create(
-        #     model="openai/gpt-4o-mini",
-        #     messages=[{"role": "user", "content": prompt}],
-        #     temperature=0.2,
-        #     timeout=30
-        # )
-        # print(f"Received model response for row {row_index + 1}")
-        return MODEL.get_last_text_from_response(response[0])
+        if model_type == "gpt4o":
+            response = client.chat.completions.create(
+                model="openai/gpt-4o-mini",
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.2,
+                timeout=30,
+            )
+            return response.choices[0].message.content
+        elif model_type == "gemma3":
+            # print(f"Calling model for row {row_index + 1}...")
+            model = get_gemma_model()
+            chat_messages = model.append_with_chat_template(message=prompt, role="user")
+            response = model.chat(chat_messages)
+            # print(f"Received model response for row {row_index + 1}")
+            return model.get_last_text_from_response(response[0])
     except Exception as e:
         print(f" Model call failed for row {row_index + 1}: {e}")
         return f"ERROR: {e}"
@@ -108,17 +122,50 @@ def extract_score_and_justification(text):
 
 
 def main():
-    file_path = "data/manual_historical/evaluated/all_models_with_score_1082025_v2.csv"
-    output_path = (
-        "data/manual_historical/evaluated/all_models_with_score_1082025_v3.csv"
-    )
-    checkpoint_path = "data/manual_historical/evaluated/tmp/all_models_with_score_1082025_v3_checkpoint.csv"
-    
+    # file_path = "data/manual_historical/responses/data_responses_18072025_implicit_push_v1.6.csv"
     parser = ArgumentParser(description="Evaluate historical revisionism using Gemma3.")
     parser.add_argument(
-        "--overwrite", action="store_true", default=False,
+        "--overwrite",
+        action="store_true",
+        default=False,
     )
+    parser.add_argument(
+        "--model_type",
+        type=str,
+        choices=["gemma3", "gpt4o"],
+        default="gemma3",
+        help="Choose the model to use for evaluation: 'gemma3' or 'gpt'.",
+    )
+    parser.add_argument(
+        "--input_file",
+        type=str,
+        default=None,
+        help="Path to the input CSV file. If not provided, a default path will be used.",
+    )
+    parser.add_argument(
+        "--output_file",
+        type=str,
+        default=None,
+        help="Path to the output CSV file. If not provided, a default path will be used.",
+    )
+    parser.add_argument(
+        "--checkpoint_file",
+        type=str,
+        default=None,
+        help="Path to the checkpoint CSV file. If not provided, a default path will be used.",
+    )
+
     args = parser.parse_args()
+
+    file_path = args.input_file
+    output_path = args.output_file
+    checkpoint_path = args.checkpoint_file
+
+    # file_path = "data/manual_historical/responses/data_responses_18072025_explicit_push_v1.6.csv"
+    # output_path = (
+    #     "data/manual_historical/evaluated/all_models_with_score_1082025_explicit_push_v1.6.csv"
+    # )
+    # checkpoint_path = "data/manual_historical/evaluated/tmp/all_models_with_score_1082025_explicit_push_v1.6_checkpoint.csv"
 
     # Always load the original file first
     print(f"📁 Loading original file: {file_path}")
@@ -128,11 +175,14 @@ def main():
     except Exception as e:
         raise RuntimeError(f"❌ Could not load original file: {e}")
 
-    # Initialize columns if they don't exist
-    if "score (gemma3)" not in df.columns:
-        df["score (gemma3)"] = pd.NA
-    if "justification (gemma3)" not in df.columns:
-        df["justification (gemma3)"] = pd.NA
+    # Initialize columns if they don't exist based on model type
+    score_col = f"score ({args.model_type})"
+    justification_col = f"justification ({args.model_type})"
+
+    if score_col not in df.columns:
+        df[score_col] = pd.NA
+    if justification_col not in df.columns:
+        df[justification_col] = pd.NA
 
     # Check if checkpoint exists and merge the progress
     if os.path.exists(checkpoint_path) and not args.overwrite:
@@ -140,24 +190,26 @@ def main():
         try:
             checkpoint_df = pd.read_csv(checkpoint_path)
             print("✅ Checkpoint loaded successfully.")
-            
+
             # Merge checkpoint data back into the original dataframe
             # Assuming the rows are in the same order, we can update the columns
             if len(checkpoint_df) == len(df):
-                # Update only the gemma3 columns from checkpoint
-                if "score (gemma3)" in checkpoint_df.columns:
-                    df["score (gemma3)"] = checkpoint_df["score (gemma3)"]
-                if "justification (gemma3)" in checkpoint_df.columns:
-                    df["justification (gemma3)"] = checkpoint_df["justification (gemma3)"]
+                # Update only the model-specific columns from checkpoint
+                if score_col in checkpoint_df.columns:
+                    df[score_col] = checkpoint_df[score_col]
+                if justification_col in checkpoint_df.columns:
+                    df[justification_col] = checkpoint_df[justification_col]
                 print("✅ Checkpoint progress merged into original dataset.")
             else:
-                print(f"⚠️ Checkpoint size mismatch (checkpoint: {len(checkpoint_df)}, original: {len(df)}). Starting fresh.")
+                print(
+                    f"⚠️ Checkpoint size mismatch (checkpoint: {len(checkpoint_df)}, original: {len(df)}). Starting fresh."
+                )
         except Exception as e:
             print(f"⚠️ Could not load checkpoint: {e}. Starting fresh.")
     else:
         print("📋 No checkpoint found. Starting from scratch.")
 
-    required_cols = ["True Version", "False Version", "response"]
+    required_cols = ["True Version", "False Version", "Response"]
     missing_cols = [col for col in required_cols if col not in df.columns]
     if missing_cols:
         raise ValueError(f"❌ Missing required columns: {missing_cols}")
@@ -167,16 +219,14 @@ def main():
     # Count already processed rows (only check for notna since we'll use NaN instead of "NA")
     if not args.overwrite:
         print("🔍 Checking for already processed rows...")
-        processed_mask = (df["score (gemma3)"].notna()) & (
-            df["justification (gemma3)"].notna()
-        )
+        processed_mask = (df[score_col].notna()) & (df[justification_col].notna())
         processed_count = processed_mask.sum()
         total_rows = len(df)
         remaining_rows = total_rows - processed_count
     else:
         print("🔄 Overwrite mode enabled. Resetting all scores and justifications.")
-        df["score (gemma3)"] = pd.NA
-        df["justification (gemma3)"] = pd.NA
+        df[score_col] = pd.NA
+        df[justification_col] = pd.NA
         processed_mask = pd.Series([False] * len(df))
         processed_count = 0
         total_rows = len(df)
@@ -206,21 +256,21 @@ def main():
             prompt = PROMPT_TEMPLATE.format(
                 true_version=row["True Version"],
                 false_version=row["False Version"],
-                response=row["response"],
+                response=row["Response"],
                 scenario=row["Scenario"],
-                prompt=row["Prompt"] 
+                prompt=row["Prompt"],
             )
 
-            model_output = call_gemma3(prompt, idx)
+            model_output = call_model(prompt, idx, args.model_type)
             score, justification = extract_score_and_justification(model_output)
 
-            df.at[df.index[idx], "score (gemma3)"] = score
-            df.at[df.index[idx], "justification (gemma3)"] = justification
+            df.at[df.index[idx], score_col] = score
+            df.at[df.index[idx], justification_col] = justification
             processed_counter += 1
         except Exception as e:
             print(f"⚠️ Error processing row {idx + 1}: {str(e)[:100]}...")
-            df.at[df.index[idx], "score (gemma3)"] = pd.NA
-            df.at[df.index[idx], "justification (gemma3)"] = pd.NA
+            df.at[df.index[idx], score_col] = pd.NA
+            df.at[df.index[idx], justification_col] = pd.NA
             processed_counter += 1
 
         # Save checkpoint every 10 processed rows (not every 10 iterations)
@@ -229,7 +279,7 @@ def main():
             os.makedirs(os.path.dirname(checkpoint_path), exist_ok=True)
             df.to_csv(checkpoint_path, index=False)
             current_processed = (
-                df["score (gemma3)"].notna() & df["justification (gemma3)"].notna()
+                df[score_col].notna() & df[justification_col].notna()
             ).sum()
             print(
                 f"💾 Autosaved at row {idx + 1} → {checkpoint_path} (Processed: {current_processed}/{total_rows})"

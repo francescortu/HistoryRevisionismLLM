@@ -7,7 +7,7 @@ readme = "README.md"
 package-mode = false
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.13"
+python = ">=3.11,<3.13"
 python-dotenv = "^1.0.1"
 easyroutine = {path = "easyroutine", develop = true}
 pandas = "^2.3.0"
@@ -25,6 +25,7 @@ beautifulsoup4 = "^4.13.4"
 requests = "^2.32.4"
 lxml = "^5.4.0"
 ipywidgets = "^8.1.7"
+huggingface-hub = {extras = ["cli"], version = "^0.34.4"}
 
 
 

@@ -33,10 +33,12 @@ import os
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 XAI_API_KEY = os.getenv("XAI_API_KEY")
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
 assert OPENAI_API_KEY is not None, "OPENAI_API_KEY is not set in the .env file"
 assert ANTHROPIC_API_KEY is not None, "ANTHROPIC_API_KEY is not set in the .env file"
 assert XAI_API_KEY is not None, "XAI_API_KEY is not set in the .env file"
+assert OPENROUTER_API_KEY is not None, "OPENROUTER_API_KEY is not set in the .env file"
 
 debug_models = [
     "gpt-4.1-nano-2025-04-14",
@@ -62,6 +64,7 @@ only_local_models = [
     "Qwen/Qwen3-32B",
     "meta-llama/Llama-4-Scout-17B-16E-Instruct",
     "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B",
+    # "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8"
 ]
 
 MODEL_ALIASES = {
@@ -82,6 +85,7 @@ MODEL_ALIASES = {
 
 
 MODEL_CONFIG = {
+    
     "gpt-4.1-2025-04-14": {
         "interface": LiteLLMInferenceModel,
         "config": LiteLLMInferenceModelConfig(
@@ -94,6 +98,13 @@ MODEL_CONFIG = {
         "config": LiteLLMInferenceModelConfig(
             model_name="gpt-4.1-nano-2025-04-14",
             openai_api_key=OPENAI_API_KEY,
+        ),
+    },
+    "gpt-4-1-mini-openrouter":{
+        "interface": LiteLLMInferenceModel,
+        "config": LiteLLMInferenceModelConfig(
+            model_name="openrouter/openai/gpt-4.1-mini",
+            openrouter_api_key=OPENROUTER_API_KEY,
         ),
     },
     "claude-3-7-sonnet-20250219": {
@@ -117,11 +128,11 @@ MODEL_CONFIG = {
             xai_api_key=XAI_API_KEY,
         ),
     },
-    "grok-3-mini": {
+    "grok-3-mini-openrouter": {
         "interface": LiteLLMInferenceModel,
         "config": LiteLLMInferenceModelConfig(
-            model_name="grok-3-mini",
-            xai_api_key=XAI_API_KEY,
+            model_name="openrouter/x-ai/grok-3-mini",
+            openrouter_api_key=OPENROUTER_API_KEY,
         ),
     },
     "google/gemma-3-27b-it": {
@@ -140,6 +151,25 @@ MODEL_CONFIG = {
             # must be a divisor of 40 and 1408 (num of attn heads)
         ),
     },
+    "meta-llama/Llama-3.3-70B-Instruct": {
+        "interface": VLLMInferenceModel,
+        "config": VLLMInferenceModelConfig(
+            model_name="meta-llama/Llama-3.3-70B-Instruct",
+            n_gpus=4,
+            gpu_memory_utilization=0.9,  # Adjusted for 8 GPUs
+            max_model_len=5000,
+            # must be a divisor of 70 and 4096 (num of attn heads)
+        ),
+    },
+    "meta-llama/Llama-4-Scout-17B-16E-Instruct": {
+        "interface": VLLMInferenceModel,
+        "config": VLLMInferenceModelConfig(
+            model_name="meta-llama/Llama-4-Scout-17B-16E-Instruct",
+            n_gpus=4,
+            gpu_memory_utilization=0.7,
+            max_model_len=8192,
+        ),
+    },
     "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B": {
         "interface": VLLMInferenceModel,
         "config": VLLMInferenceModelConfig(
@@ -152,12 +182,7 @@ MODEL_CONFIG = {
             model_name="mistralai/Mistral-7B-Instruct-v0.3", n_gpus=2
         ),
     },
-    "meta-llama/Llama-4-Scout-17B-16E-Instruct": {
-        "interface": VLLMInferenceModel,
-        "config": VLLMInferenceModelConfig(
-            model_name="meta-llama/Llama-4-Scout-17B-16E-Instruct", n_gpus=4
-        ),
-    },
+    # Duplicate entry removed; the above configuration applies
     "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B": {
         "interface": VLLMInferenceModel,
         "config": VLLMInferenceModelConfig(
@@ -201,6 +226,7 @@ def load_prompts(file_path: str, debug: bool = False):
 
 
 def main():
+    print("Starting evaluation script...")
     parser = ArgumentParser(
         description="Evaluate models on historical revisionism prompts."
     )

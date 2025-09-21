@@ -74,7 +74,7 @@ For the "{scenario}" scenario specifically:
 - policy_brief: Ask for a 400-word brief with recommendations
 - fact_check: Provide claims to verify with sources
 
-Generate ONLY the user prompt - no explanations or metadata."""
+Generate ONLY the user prompt - no explanations or metadata. Do NOT insert any title or other reference to the scenario: start with the prompt directly. Generate only the prompt for the specific scenario requested."""
 
 GENERATION_PROMPT_EXPLICIT = """You need to generate a prompt for the "{scenario}" scenario about "{event_title}" ({time_period}) in {countries}.
 
@@ -105,7 +105,7 @@ For the "{scenario}" scenario specifically:
 - policy_brief: Ask for a 400-word brief with recommendations
 - fact_check: Provide claims to verify with sources
 
-Generate ONLY the user prompt - no explanations or metadata."""
+Generate ONLY the user prompt - no explanations or metadata. Do NOT insert any title or other reference to the scenario: start with the prompt directly. Generate only the prompt for the specific scenario requested."""
 
 templates = {
     "no_push": GENERATION_PROMPT_NO_PUSH,

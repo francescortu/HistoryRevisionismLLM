@@ -12,6 +12,7 @@ from datetime import datetime
 from prompts.scenarios import get_output_specs, build_meta_prompt
 from src.utils import OutputDataFrame
 
+
 def init_model(
     model_name: str, n_gpus: int = 1, dtype: str = "bfloat16"
 ) -> VLLMInferenceModel:
@@ -61,7 +62,26 @@ def load_historical_dataset(file_path: str, debug: bool = False) -> list:
     Returns:
         list: A list of dictionaries containing the historical dataset.
     """
-    df = pd.read_csv(file_path)
+    try:
+        # Try reading with default settings first
+        df = pd.read_csv(file_path)
+    except pd.errors.ParserError as e:
+        print(f"CSV parsing error: {e}")
+        print("Attempting to read CSV with error handling...")
+
+        # Try with more robust parsing options
+        try:
+            df = pd.read_csv(file_path, quoting=1, on_bad_lines="skip")
+        except Exception as e:
+            print(f"Second parsing attempt failed: {e}")
+            # If that fails, try with even more lenient settings
+            df = pd.read_csv(
+                file_path,
+                sep=",",
+                quotechar='"',
+                skipinitialspace=True,
+                on_bad_lines="skip",
+            )
 
     # Convert DataFrame to list of dictionaries
     data = df.to_dict("records")
@@ -73,15 +93,13 @@ def load_historical_dataset(file_path: str, debug: bool = False) -> list:
     return data
 
 
-
-
 def process_case(
     case_id: int,
     case: dict,
     model: VLLMInferenceModel,
     df: OutputDataFrame,
     dataset_type: str = "euvsdisinfo",
-    push_level: list = ["no_push", "implicit_push", "explicit_push"]
+    push_level: list = ["no_push", "implicit_push", "explicit_push"],
 ) -> None:
     """
     Process a single historical revisionism case using the provided model and DataFrame.
@@ -120,7 +138,7 @@ def process_case(
         batched_request = []
         for pl in push_level:
             for scenario, output_spec in scenarios.items():
-                meta_prompt = build_meta_prompt(
+                system_prompt, meta_prompt = build_meta_prompt(
                     push_level=pl,
                     scenario=scenario,
                     output_spec=output_spec,
@@ -160,8 +178,7 @@ def process_case(
                 response_text = response_text[:-3].strip()
             if response_text.endswith("```'"):
                 response_text = response_text[:-4].strip()
-                
-            
+
             dataframe_rows.append(
                 {
                     "case_id": case_id,
@@ -230,7 +247,7 @@ def main():
 
     model = init_model(model_name=args.model_name, n_gpus=args.n_gpus)
     print(f"Model {args.model_name} initialized with {args.n_gpus} GPUs.")
-    
+
     if args.dataset_type == "euvsdisinfo":
         output_path = f"data/EUvsDISINFO/processed/euvsdisinfo_processed_{args.tag}.csv"
     elif args.dataset_type == "historical":
@@ -254,10 +271,10 @@ def main():
             "Dataset",
         ],
         path=output_path,
-        add_id=True 
+        add_id=True,
     )
-    
-    #push level to list
+
+    # push level to list
     if args.push_level == "no_push":
         args.push_level = ["no_push"]
     elif args.push_level == "implicit_push":
@@ -277,7 +294,14 @@ def main():
             description="Processing EUvsDisinfo cases",
             total=len(euvsdisinfo),
         ):
-            process_case(case_id, case, model, df, dataset_type="euvsdisinfo", push_level=args.push_level)
+            process_case(
+                case_id,
+                case,
+                model,
+                df,
+                dataset_type="euvsdisinfo",
+                push_level=args.push_level,
+            )
 
     # Process historical dataset
     if args.dataset_type in ["historical", "both"]:
@@ -292,7 +316,14 @@ def main():
                 description="Processing historical dataset cases",
                 total=len(historical_data),
             ):
-                process_case(case_id, case, model, df, dataset_type="historical", push_level=args.push_level)
+                process_case(
+                    case_id,
+                    case,
+                    model,
+                    df,
+                    dataset_type="historical",
+                    push_level=args.push_level,
+                )
         except FileNotFoundError:
             print(
                 f"Historical dataset file not found at {args.historical_dataset_path}"
@@ -300,6 +331,7 @@ def main():
             if args.dataset_type == "historical":
                 print("No datasets were processed.")
                 return
+
 
 if __name__ == "__main__":
     main()
