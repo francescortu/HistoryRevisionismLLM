@@ -4,3 +4,11 @@ data/manual_historical/evaluated/all_models_with_score_31072025_v1 filter=lfs di
 data/manual_historical/evaluated/all_models_with_score_31072025_v1.2.csv filter=lfs diff=lfs merge=lfs -text
 data/manual_historical/evaluated/all_models_with_score_31072025_v1.csv filter=lfs diff=lfs merge=lfs -text
 *.txt filter=lfs diff=lfs merge=lfs -text
+data/manual_historical/responses/* filter=lfs diff=lfs merge=lfs -text
+data/manual_historical/responses/data_responses_18072025_implicit_push_api_all_v1.6.csv filter=lfs diff=lfs merge=lfs -text
+data/manual_historical/responses/data_responses_18072025_implicit_push_v1.6.csv filter=lfs diff=lfs merge=lfs -text
+data/manual_historical/responses/data_responses_18072025_v1.5.csv filter=lfs diff=lfs merge=lfs -text
+data/manual_historical/responses/data_responses_18072025_v1.6.csv filter=lfs diff=lfs merge=lfs -text
+data/manual_historical/responses/data_responses_18072025_v1.csv filter=lfs diff=lfs merge=lfs -text
+data/manual_historical/responses/data_responses_18072025_explicit_push_api_all_v1.6.csv filter=lfs diff=lfs merge=lfs -text
+data/manual_historical/responses/data_responses_18072025_explicit_push_v1.6.csv filter=lfs diff=lfs merge=lfs -text
