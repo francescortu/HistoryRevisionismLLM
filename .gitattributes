@@ -21,3 +21,4 @@ data/manual_historical/evaluated/api_models_with_score_18072025_explicit_push_ge
 data/manual_historical/responses/data_responses_18072025_explicit_push_all_models_v1.6.csv filter=lfs diff=lfs merge=lfs -text
 data/manual_historical/evaluated/explicit/all_models_with_score_18072025_explicit_push_gemma3_v2.2.csv filter=lfs diff=lfs merge=lfs -text
 data/manual_historical/evaluated/implicit/all_models_with_score_18072025_implicit_push_v2.2.csv filter=lfs diff=lfs merge=lfs -text
+data/manual_historical/evaluated/all_models_with_score_v4.csv filter=lfs diff=lfs merge=lfs -text
