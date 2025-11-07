@@ -11,4 +11,16 @@
         "-p",
         "*test*.py"
     ],
+    "slurm-dashboard.submit-dashboard.jobScriptPatterns": [
+        "**/*.slurm",
+        "**/*.sbatch",
+        "**/*.job",
+        "**/slurm/*.sh",
+        "prova.sh"
+    ],
+    "slurm-dashboard.job-dashboard.aggressiveRefresh": true,
+    "slurm-dashboard.job-dashboard.autoRefreshEnabled": true,
+    "slurm-dashboard.resource-dashboard.autoRefreshEnabled": true,
+    "slurm-dashboard.submit-dashboard.autoRefreshEnabled": true,
+    "window.title": "HistoryRevisionismLLM"
 }
