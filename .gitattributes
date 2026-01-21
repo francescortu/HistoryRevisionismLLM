@@ -24,3 +24,4 @@ data/manual_historical/evaluated/implicit/all_models_with_score_18072025_implici
 data/manual_historical/evaluated/all_models_with_score_v4.csv filter=lfs diff=lfs merge=lfs -text
 data/manual_historical/evaluated/binary_judged_all_models_with_score_v5_qwen3.csv filter=lfs diff=lfs merge=lfs -text
 data/manual_historical/evaluated/binary_judged_all_models_with_score_v5_gpt5_nano.csv filter=lfs diff=lfs merge=lfs -text
+*.csv filter=lfs diff=lfs merge=lfs -text
